@@ -1,4 +1,4 @@
-# LayoutsPlugin
+# Layouts Plugin
 A small quality-of-life plugin to allow importing and exporting of UE4 layouts.
 
 Adds "Import Layout" and "Export Layout" to Window drop-down.
