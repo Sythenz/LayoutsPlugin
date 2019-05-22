@@ -11,6 +11,8 @@ I've looked into this and unfortunately there's no way to refresh slate in the e
 **WIP:**
 I'm working on adding a recent drop-down that will show previously loaded Editor Layouts, handy for quick switching.
 
+Thanks to https://twitter.com/ShadowriverUB for assisting with debugging <3
+
 
 # Install
 To install, download or clone this to your Project/Plugins folder (if this folder doesn't exist, create it!) 
