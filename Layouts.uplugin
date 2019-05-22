@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Layouts",
+	"Description": "Adds the ability to customize and choose different editor layouts.",
+	"Category": "Other",
+	"CreatedBy": "Alessa Baker",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "Layouts",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
