@@ -8,6 +8,7 @@ void FLayoutsCommands::RegisterCommands()
 {
 	UI_COMMAND(ImportLayout, "Import Layout", "Imports a layout of choice.", EUserInterfaceActionType::Button, FInputGesture());
 	UI_COMMAND(ExportLayout, "Export Layout", "Saves a Layout.", EUserInterfaceActionType::Button, FInputGesture());
+	UI_COMMAND(RecentLayouts, "Recent Layouts", "Previous layouts you've imported.", EUserInterfaceActionType::Button, FInputGesture());
 }
 
 #undef LOCTEXT_NAMESPACE

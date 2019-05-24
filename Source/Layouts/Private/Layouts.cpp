@@ -60,6 +60,24 @@ void FLayoutsModule::StartupModule()
 		LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	}
 
+	if (!GConfig) return;
+
+	//Initialize our Layout Section if it doesn't exist.
+	if (!GConfig->DoesSectionExist(*LayoutsSection, GEditorSettingsIni))
+	{
+		for (int i = 0; i < RecentListMax; i++)
+		{
+			GConfig->SetString(
+				*LayoutsSection,
+				*FString::Printf(TEXT("RecentLayout%d"), i),
+				TEXT(""),
+				GEditorSettingsIni
+			);
+		}
+	}
+	
+	////Push our initialized config update
+	GConfig->Flush(false, GEditorSettingsIni);
 }
 
 void FLayoutsModule::ShutdownModule()
@@ -72,6 +90,7 @@ void FLayoutsModule::ShutdownModule()
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(LayoutsTabName);
 }
+
 
 void FLayoutsModule::LoadButtonClicked()
 {
@@ -95,51 +114,7 @@ void FLayoutsModule::LoadButtonClicked()
 
 		if (Opened && OpenedFiles.Num() > 0)
 		{
-			
-			if (EAppReturnType::Ok != OpenMsgDlgInt(EAppMsgType::OkCancel, LOCTEXT("ActionRestartMsg", "This action requires the editor to restart. you will be prompted to save any changes. Continue?"), LOCTEXT("ResetUILayout_Title", "Reset UI Layout")))
-			{
-				return;
-			}
-
-			//Backup our User Settings
-			GetMutableDefault<UEditorPerProjectUserSettings>()->SaveConfig();
-
-			FString BackupEditorLayoutIni = FString::Printf(TEXT("%s_Backup.ini"), *FPaths::GetBaseFilename(GEditorLayoutIni, false));
-
-			//Copied from FMainFrameActionCallbacks::ResetLayout()
-
-			if (COPY_Fail == IFileManager::Get().Copy(*GEditorLayoutIni, *OpenedFiles[0]))
-			{
-				FMessageLog EditorErrors("EditorErrors");
-				if (!FPaths::FileExists(GEditorLayoutIni))
-				{
-					FFormatNamedArguments Arguments;
-					Arguments.Add(TEXT("FileName"), FText::FromString(GEditorLayoutIni));
-					EditorErrors.Warning(FText::Format(LOCTEXT("UnsuccessfulBackup_NoExist_Notification", "Unsuccessful backup! {FileName} does not exist!"), Arguments));
-					UE_LOG(LogLayouts, Log, TEXT("Invalid because File Doesn't exist, yo"));
-				}
-				else if (IFileManager::Get().IsReadOnly(*BackupEditorLayoutIni))
-				{
-					FFormatNamedArguments Arguments;
-					Arguments.Add(TEXT("FileName"), FText::FromString(FPaths::ConvertRelativePathToFull(BackupEditorLayoutIni)));
-					EditorErrors.Warning(FText::Format(LOCTEXT("UnsuccessfulBackup_ReadOnly_Notification", "Unsuccessful backup! {FileName} is read-only!"), Arguments));
-					UE_LOG(LogLayouts, Log, TEXT("File is read only bitch!"));
-				}
-				else
-				{
-					// We don't specifically know why it failed, this is a fallback.
-					FFormatNamedArguments Arguments;
-					Arguments.Add(TEXT("SourceFileName"), FText::FromString(GEditorLayoutIni));
-					Arguments.Add(TEXT("BackupFileName"), FText::FromString(FPaths::ConvertRelativePathToFull(BackupEditorLayoutIni)));
-					EditorErrors.Warning(FText::Format(LOCTEXT("UnsuccessfulBackup_Fallback_Notification", "Unsuccessful backup of {SourceFileName} to {BackupFileName}"), Arguments));
-					UE_LOG(LogLayouts, Log, TEXT("Some other reason, we don't know why."));
-				}
-				EditorErrors.Notify(LOCTEXT("BackupUnsuccessful_Title", "Backup Unsuccessful!"));
-			}
-
-			//Restart the Editor
-			FUnrealEdMisc::Get().AllowSavingLayoutOnClose(false);
-			FUnrealEdMisc::Get().CB_RefreshEditor();
+			LoadLayout(OpenedFiles[0]);
 		}
 	}
 }
@@ -191,10 +166,134 @@ void FLayoutsModule::SaveButtonClicked()
 	}
 }
 
+void FLayoutsModule::LoadLayout(const FString& Path)
+{
+	UE_LOG(LogLayouts, Log, TEXT("Loading Layout: %s"), *Path);
+
+	//Warn user about restart
+	if (EAppReturnType::Ok != OpenMsgDlgInt(EAppMsgType::OkCancel, LOCTEXT("ActionRestartMsg", "This action requires the editor to restart. you will be prompted to save any changes. Continue?"), LOCTEXT("ResetUILayout_Title", "Reset UI Layout")))
+	{
+		return;
+	}
+
+	//Backup our User Settings
+	GetMutableDefault<UEditorPerProjectUserSettings>()->SaveConfig();
+	FString BackupEditorLayoutIni = FString::Printf(TEXT("%s_Backup.ini"), *FPaths::GetBaseFilename(GEditorLayoutIni, false));
+
+	if (COPY_Fail == IFileManager::Get().Copy(*GEditorLayoutIni, *Path))
+	{
+		//Copy pasta from UE4's Reset Layout - just some error handling.
+
+		FMessageLog EditorErrors("EditorErrors");
+		if (!FPaths::FileExists(GEditorLayoutIni))
+		{
+			FFormatNamedArguments Arguments;
+			Arguments.Add(TEXT("FileName"), FText::FromString(GEditorLayoutIni));
+			EditorErrors.Warning(FText::Format(LOCTEXT("UnsuccessfulBackup_NoExist_Notification", "Unsuccessful backup! {FileName} does not exist!"), Arguments));
+			UE_LOG(LogLayouts, Log, TEXT("Invalid because File Doesn't exist, yo"));
+		}
+		else if (IFileManager::Get().IsReadOnly(*BackupEditorLayoutIni))
+		{
+			FFormatNamedArguments Arguments;
+			Arguments.Add(TEXT("FileName"), FText::FromString(FPaths::ConvertRelativePathToFull(BackupEditorLayoutIni)));
+			EditorErrors.Warning(FText::Format(LOCTEXT("UnsuccessfulBackup_ReadOnly_Notification", "Unsuccessful backup! {FileName} is read-only!"), Arguments));
+			UE_LOG(LogLayouts, Log, TEXT("File is read only bitch!"));
+		}
+		else
+		{
+			// We don't specifically know why it failed, this is a fallback.
+			FFormatNamedArguments Arguments;
+			Arguments.Add(TEXT("SourceFileName"), FText::FromString(GEditorLayoutIni));
+			Arguments.Add(TEXT("BackupFileName"), FText::FromString(FPaths::ConvertRelativePathToFull(BackupEditorLayoutIni)));
+			EditorErrors.Warning(FText::Format(LOCTEXT("UnsuccessfulBackup_Fallback_Notification", "Unsuccessful backup of {SourceFileName} to {BackupFileName}"), Arguments));
+			UE_LOG(LogLayouts, Log, TEXT("Some other reason, we don't know why."));
+		}
+		EditorErrors.Notify(LOCTEXT("BackupUnsuccessful_Title", "Backup Unsuccessful!"));
+	}
+
+	//Update our recent list with the new path.
+	UpdateRecentList();
+
+	//Restart the Editor
+	FUnrealEdMisc::Get().AllowSavingLayoutOnClose(false);
+	FUnrealEdMisc::Get().RestartEditor(false);
+}
+
 void FLayoutsModule::AddMenuExtension(FMenuBuilder& Builder)
 {
-	Builder.AddMenuEntry(FLayoutsCommands::Get().ImportLayout);
-	Builder.AddMenuEntry(FLayoutsCommands::Get().ExportLayout);
+	Builder.BeginSection("LayoutsPlugin", FText::FromString("Layouts Plugin"));
+	{
+		Builder.AddMenuEntry(FLayoutsCommands::Get().ImportLayout);
+		Builder.AddMenuEntry(FLayoutsCommands::Get().ExportLayout);
+	
+		Builder.AddSubMenu(FText::FromString("Recent Layouts"),
+			FText::FromString(""),
+			FNewMenuDelegate::CreateRaw(this, &FLayoutsModule::FillRecentMenu));
+	}
+
+	Builder.EndSection();
+}
+
+void FLayoutsModule::FillRecentMenu(FMenuBuilder& Builder)
+{
+	for (int i = 0; i < RecentListMax; i++)
+	{
+		FString CurrentPath;
+
+		GConfig->GetString(
+			*LayoutsSection,
+			*FString::Printf(TEXT("RecentLayout%d"), i),
+			CurrentPath,
+			GEditorSettingsIni
+		);
+
+		FString Name = FPaths::GetCleanFilename(CurrentPath);
+
+		Builder.AddMenuEntry(
+			FText::FromString(*Name),
+			FText::FromString(*CurrentPath),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateLambda([this, CurrentPath] {
+				LoadLayout(*CurrentPath);
+			}))
+		);
+	}
+}
+
+void FLayoutsModule::UpdateRecentList()
+{
+	for (int i = RecentListMax; i > 0; i--)
+	{
+		//Shift all of our paths to the right
+
+		FString currentString;
+
+		GConfig->GetString(
+			*LayoutsSection,
+			*FString::Printf(TEXT("RecentLayout%d"), i - 1),
+			currentString,
+			GEditorSettingsIni
+		);
+
+
+		GConfig->SetString(
+			*LayoutsSection,
+			*FString::Printf(TEXT("RecentLayout%d"), i),
+			*currentString,
+			GEditorSettingsIni
+		);
+	}
+
+	//Set our first as most recently imported
+	GConfig->SetString(
+		*LayoutsSection,
+		*FString::Printf(TEXT("RecentLayout%d"), 0),
+		*Path,
+		GEditorSettingsIni
+	);
+
+	////Push our initialized config update
+	GConfig->Flush(false, GEditorSettingsIni);
 }
 
 #undef LOCTEXT_NAMESPACE

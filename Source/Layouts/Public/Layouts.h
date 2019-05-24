@@ -18,15 +18,28 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 	
-	/** This function will be bound to Command (by default it will bring up plugin window) */
 	void LoadButtonClicked();
+
 	void SaveButtonClicked();
-	
+
+	/*
+		Validates and backs up the current layout before importing, updating recent list and restarting the editor.
+	*/
+	void LoadLayout(const FString& Path);
+
 private:
 
 	void AddMenuExtension(FMenuBuilder& Builder);
 
+	void FillRecentMenu(FMenuBuilder& Builder);
+
+	void UpdateRecentList();
+
 	FString DefaultDirectory = FPaths::GetPath(GEditorLayoutIni);
+
+	FString LayoutsSection = "LayoutsPlugin";
+
+	int32 RecentListMax = 5;
 
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
