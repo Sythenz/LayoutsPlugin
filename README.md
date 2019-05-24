@@ -8,6 +8,8 @@ I've looked into this and unfortunately there's no way to refresh slate in the e
 
 **Export Layout:** Saves out the layout to a directory and a name you specify, handy for sharing layouts with others.
 
+**Recent Layouts:** A drop down that lists the last 5 layouts imported, clicking them will load a previous layout.
+
 **WIP:**
 I'm working on adding a recent drop-down that will show previously loaded Editor Layouts, handy for quick switching.
 
