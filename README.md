@@ -10,9 +10,6 @@ I've looked into this and unfortunately there's no way to refresh slate in the e
 
 **Recent Layouts:** A drop down that lists the last 5 layouts imported, clicking them will load a previous layout.
 
-**WIP:**
-I'm working on adding a recent drop-down that will show previously loaded Editor Layouts, handy for quick switching.
-
 Thanks to https://twitter.com/ShadowriverUB for assisting with debugging <3
 
 
