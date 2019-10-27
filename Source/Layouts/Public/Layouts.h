@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
+#include "Misc/Paths.h"
 
 class FToolBarBuilder;
 class FMenuBuilder;
@@ -33,7 +34,7 @@ private:
 
 	void FillRecentMenu(FMenuBuilder& Builder);
 
-	void UpdateRecentList();
+	void UpdateRecentList(const FString& Path) const;
 
 	FString DefaultDirectory = FPaths::GetPath(GEditorLayoutIni);
 

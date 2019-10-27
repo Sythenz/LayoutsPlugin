@@ -5,24 +5,19 @@
 #include "LayoutsCommands.h"
 #include "LevelEditor.h"
 #include "Widgets/Docking/SDockTab.h"
-#include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "Dialogs.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
-#include "SlateApplication.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"
 #include "Editor/EditorPerProjectUserSettings.h"
-#include "FileManager.h"
-#include "MessageLog.h"
 #include "MainFrame/Private/Frame/MainFrameActions.h"
-#include "SNotificationList.h"
-#include "EditorStyleSet.h"
-#include "NotificationManager.h"
 #include "EditorDirectories.h"
-#include "FileHelper.h"
-#include "TabManager.h"
 #include "CoreGlobals.h"
+#include "Misc/ConfigCacheIni.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Runtime\Core\Private\Misc\FileHelper.cpp"
+#include "Logging/MessageLog.h"
+#include "Dialogs/Dialogs.h"
 
 DEFINE_LOG_CATEGORY(LogLayouts);
 
@@ -212,7 +207,7 @@ void FLayoutsModule::LoadLayout(const FString& Path)
 	}
 
 	//Update our recent list with the new path.
-	UpdateRecentList();
+	UpdateRecentList(Path);
 
 	//Restart the Editor
 	FUnrealEdMisc::Get().AllowSavingLayoutOnClose(false);
@@ -260,7 +255,7 @@ void FLayoutsModule::FillRecentMenu(FMenuBuilder& Builder)
 	}
 }
 
-void FLayoutsModule::UpdateRecentList()
+void FLayoutsModule::UpdateRecentList(const FString& Path) const
 {
 	for (int i = RecentListMax; i > 0; i--)
 	{
